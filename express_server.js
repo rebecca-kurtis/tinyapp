@@ -61,6 +61,15 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+app.post('/urls/:id/delete', (req, res) => {
+  const urlID = req.params.id;
+
+  // Remove pet from database object
+  delete urlDatabase[urlID];
+
+  res.redirect('/urls');
+});
+
 //Server listening
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
