@@ -2,13 +2,16 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 
+//Middleware
 app.set("view engine", "ejs");
 
+//Database
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xk": "http://www.google.com"
 };
 
+//Generates a random unique ID
 const generateRandomString = (length) => {
   const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let result = '';
@@ -17,10 +20,9 @@ const generateRandomString = (length) => {
   }
   return result;
 };
-
 let uniqID = generateRandomString(6);
-// console.log(uniqID);
 
+//Routes
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
@@ -59,6 +61,7 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+//Server listening
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
