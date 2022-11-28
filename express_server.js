@@ -45,8 +45,8 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("Ok");
+  urlDatabase[uniqID] = req.body.longURL;
+  res.redirect(`/urls/${uniqID}`);
 });
 
 app.get("/urls/:id", (req, res) => {
