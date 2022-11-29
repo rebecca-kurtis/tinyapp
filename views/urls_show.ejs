@@ -21,6 +21,18 @@
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
         <!-- <p><a href="#">Shorten a New URL</a></p> -->
+
+        <h4>Edit</h4>
+
+    <form method="POST" action="/urls/<%= id %>">
+        <label>
+            New URL:
+            <input name="id" value="<%= id.longURL %>">
+        </label>
+
+        <input type="submit" value="Submit">
+    </form>
+
       </div>
       <div class="card-footer text-muted"></div>
     </div>

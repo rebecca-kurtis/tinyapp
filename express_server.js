@@ -20,7 +20,7 @@ const generateRandomString = (length) => {
   }
   return result;
 };
-let uniqID = generateRandomString(6);
+// let uniqID = generateRandomString(6);
 
 //Routes
 app.use(express.urlencoded({ extended: true }));
@@ -42,18 +42,28 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+//create a new URL
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
 app.post("/urls", (req, res) => {
+  const uniqID = generateRandomString(6);
   urlDatabase[uniqID] = req.body.longURL;
   res.redirect(`/urls/${uniqID}`);
 });
+//
 
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
+});
+
+//edit a url
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  urlDatabase[id] = req.body.id;
+  res.redirect('/urls');
 });
 
 app.get("/u/:id", (req, res) => {
@@ -61,10 +71,12 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+//delete
 app.post('/urls/:id/delete', (req, res) => {
+
   const urlID = req.params.id;
 
-  // Remove pet from database object
+  // Remove URL from database object
   delete urlDatabase[urlID];
 
   res.redirect('/urls');
