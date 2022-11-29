@@ -1,15 +1,8 @@
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp</a>
-    <button
-      class="navbar-toggler"
-      type="button"
-      data-toggle="collapse"
-      data-target="#navbarNavAltMarkup"
-      aria-controls="navbarNavAltMarkup"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup"
+      aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
@@ -21,14 +14,23 @@
 
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
-        <form class="nav-item" method="POST" action="/urls/login" style="border-radius: 20px; background: transparent;">
-          <label>
-              <input name="username" placeholder="Username">
-              
-          </label>
-  
-          <input type="submit" value="Login">
-      </form>
+        <%if (!username) {%>
+          <form class="nav-item" method="POST" action="/login" style="border-radius: 20px">
+            <label>
+              <input name="username" placeholder="Username" style="padding: 5px; border-radius: 5px; border-color: transparent;">
+
+            </label>
+
+            <input type="submit" value="Login" style="border-radius: 20px; background-color: transparent; border-color: black; border-radius: 5px; padding: 6px;">
+          </form>
+          <% } else {%>
+            <h4 style="font-size: 23px; padding: 5px; padding-right: 10px; font-weight: 400;"> Logged in as: <%= username%>!
+            </h4>
+            <form method="POST" action="/logout">
+              <button type="submit" style="border-radius: 20px; background-color: transparent; border-color: black; border-radius: 5px; padding: 6px;">Logout
+              </button>
+            </form>
+            <%} %>
       </div>
     </div>
   </nav>

@@ -1,11 +1,13 @@
 const express = require("express");
 const morgan = require("morgan");
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
 
 //Middleware
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(morgan('dev'));
 
 //Database
@@ -43,15 +45,37 @@ app.get("/hello", (req, res) => {
 
 // Get /urls Route
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"],
+  };
   res.render("urls_index", templateVars);
+});
+
+//Post for user to login
+app.post("/login", (req, res) => {
+  res.cookie('username', req.body.username);
+
+  res.redirect('/urls');
+  
+});
+
+//Post for user to logout
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
+
+  res.redirect('/urls');
+  
 });
 
 //Create a new URL
 
 // Get /urls/new Route
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"]
+  };
+  res.render("urls_new", templateVars);
 });
 
 // Post uniqueID to database for newURL
@@ -65,7 +89,11 @@ app.post("/urls", (req, res) => {
 
 //Get /urls/:id to show the URL
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    username: req.cookies["username"]
+  };
   res.render("urls_show", templateVars);
 });
 
