@@ -1,9 +1,12 @@
 const express = require("express");
+const morgan = require("morgan");
 const app = express();
 const PORT = 8080;
 
 //Middleware
 app.set("view engine", "ejs");
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan('dev'));
 
 //Database
 const urlDatabase = {
@@ -20,58 +23,66 @@ const generateRandomString = (length) => {
   }
   return result;
 };
-// let uniqID = generateRandomString(6);
 
 //Routes
-app.use(express.urlencoded({ extended: true }));
 
+// Get / Route
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+// Get /urls.json Route
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+// Get /hello Route
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+// Get /urls Route
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
-//create a new URL
+//Create a new URL
+
+// Get /urls/new Route
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+// Post uniqueID to database for newURL
 app.post("/urls", (req, res) => {
   const uniqID = generateRandomString(6);
   urlDatabase[uniqID] = req.body.longURL;
   res.redirect(`/urls/${uniqID}`);
 });
+
 //
 
+//Get /urls/:id to show the URL
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });
 
-//edit a url
+//Post /urls/:id to edit a url
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   urlDatabase[id] = req.body.id;
   res.redirect('/urls');
 });
 
+//Get to go to the longURL from the shortURL
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
 
-//delete
+//Post to delete a URL
 app.post('/urls/:id/delete', (req, res) => {
 
   const urlID = req.params.id;
