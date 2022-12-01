@@ -10,10 +10,24 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
 
-//Database
+//Database for URLs
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xk": "http://www.google.com"
+};
+
+//Database for users
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
 };
 
 //Generates a random unique ID
@@ -52,22 +66,12 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-// Get /register Route
-app.get("/register", (req, res) => {
-  const templateVars = {
-    username: req.cookies["username"],
-    email: req.cookies["email"],
-    password: req.cookies["password"],
-  };
-  res.render("urls_register", templateVars);
-});
-
 //Post for user to login
 app.post("/login", (req, res) => {
   res.cookie('username', req.body.username);
 
   res.redirect('/urls');
-  
+
 });
 
 //Post for user to logout
@@ -75,7 +79,7 @@ app.post("/logout", (req, res) => {
   res.clearCookie('username');
 
   res.redirect('/urls');
-  
+
 });
 
 //Create a new URL
@@ -94,6 +98,34 @@ app.post("/urls", (req, res) => {
   urlDatabase[uniqID] = req.body.longURL;
   res.redirect(`/urls/${uniqID}`);
 });
+
+//
+
+//Create a new User
+
+// Get /register Route
+app.get("/register", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"],
+    email: req.cookies["email"],
+    password: req.cookies["password"],
+  };
+  res.render("urls_register", templateVars);
+});
+
+// Post uniqueUsernameID to users for a newUser
+app.post("/register", (req, res) => {
+  const uniqUserID = generateRandomString(6);
+  users[uniqUserID] = {
+    username: uniqUserID,
+    email: req.body.email,
+    password: req.body.password,
+  };
+  res.cookie('user_id', uniqUserID);
+  console.log('new user: ', users);
+  res.redirect('/urls');
+});
+
 
 //
 
