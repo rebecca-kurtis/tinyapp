@@ -14,7 +14,7 @@
 
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
-        <%if (!username) {%>
+        <%if (!user) {%>
           <form class="nav-item" method="POST" action="/login" style="border-radius: 20px">
             <label>
               <input name="username" placeholder="Username" style="padding: 5px; border-radius: 5px; border-color: transparent;">
@@ -24,7 +24,7 @@
             <input type="submit" value="Login" style="border-radius: 20px; background-color: transparent; border-color: black; border-radius: 5px; padding: 6px;">
           </form>
           <% } else {%>
-            <h4 style="font-size: 23px; padding: 5px; padding-right: 10px; font-weight: 400;"> Logged in as: <%= username%>!
+            <h4 style="font-size: 23px; padding: 5px; padding-right: 10px; font-weight: 400;"> Logged in as: <%= user.email%>!
             </h4>
             <form method="POST" action="/logout">
               <button type="submit" style="border-radius: 20px; background-color: transparent; border-color: black; border-radius: 5px; padding: 6px;">Logout

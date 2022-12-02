@@ -28,6 +28,11 @@ const users = {
     email: "user2@example.com",
     password: "dishwasher-funk",
   },
+  'abc123': {
+    id: "abc123",
+    email: "abc@example.com",
+    password: "123",
+  },
 };
 
 //Generates a random unique ID
@@ -40,6 +45,7 @@ const generateRandomString = (length) => {
   return result;
 };
 
+//function get user by email (create)
 //Routes
 
 // Get / Route
@@ -59,24 +65,33 @@ app.get("/hello", (req, res) => {
 
 // Get /urls Route
 app.get("/urls", (req, res) => {
+  const userId = req.cookies["user_id"];
+  const user = users[userId];
+  // console.log('user:', user);
   const templateVars = {
+    user,
     urls: urlDatabase,
-    username: req.cookies["username"],
   };
+ 
   res.render("urls_index", templateVars);
 });
 
 //Post for user to login
 app.post("/login", (req, res) => {
-  res.cookie('username', req.body.username);
+  const email = req.body.email;
+  const password = req.body.password;
+  //Get user and compare password and then if good set cookie
+  res.cookie('user_id', 'abc123');
 
   res.redirect('/urls');
 
 });
 
+
+
 //Post for user to logout
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
 
   res.redirect('/urls');
 
@@ -86,9 +101,10 @@ app.post("/logout", (req, res) => {
 
 // Get /urls/new Route
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    username: req.cookies["username"]
-  };
+  const userId = req.cookies["user_id"];
+  const user = users[userId];
+  // console.log('user is:', user);
+  const templateVars = {user};
   res.render("urls_new", templateVars);
 });
 
@@ -105,23 +121,21 @@ app.post("/urls", (req, res) => {
 
 // Get /register Route
 app.get("/register", (req, res) => {
-  const templateVars = {
-    username: req.cookies["username"],
-    email: req.cookies["email"],
-    password: req.cookies["password"],
-  };
+  const userId = req.cookies["user_id"];
+  const user = users[userId];
+  const templateVars = {user};
   res.render("urls_register", templateVars);
 });
 
 // Post uniqueUsernameID to users for a newUser
 app.post("/register", (req, res) => {
-  const uniqUserID = generateRandomString(6);
-  users[uniqUserID] = {
-    username: uniqUserID,
+  const id = generateRandomString(6);
+  users[id] = {
+    id,
     email: req.body.email,
     password: req.body.password,
   };
-  res.cookie('user_id', uniqUserID);
+  res.cookie('user_id', id);
   console.log('new user: ', users);
   res.redirect('/urls');
 });
@@ -131,10 +145,12 @@ app.post("/register", (req, res) => {
 
 //Get /urls/:id to show the URL
 app.get("/urls/:id", (req, res) => {
+  const userId = req.cookies["user_id"];
+  const user = users[userId];
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies["username"]
+    user,
   };
   res.render("urls_show", templateVars);
 });
