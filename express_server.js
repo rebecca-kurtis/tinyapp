@@ -1,8 +1,9 @@
 const express = require("express");
 const morgan = require("morgan");
 const cookieSession = require('cookie-session');
-
+const { getUserByEmail, generateRandomString, getUrlsForUser} = require("./helper");
 const bcrypt = require("bcryptjs");
+
 const app = express();
 const PORT = 8080;
 
@@ -46,42 +47,6 @@ const users = {
   },
 };
 
-//Function - Generates a random unique ID
-const generateRandomString = (length) => {
-  const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let result = '';
-  for (let i = length; i > 0; --i) {
-    result += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return result;
-};
-
-//Function - Look up user by Email
-const getUserByEmail = (email) => {
-  let foundUser = null;
-  for (const userId in users) {
-    const user = users[userId];
-
-    if (email === user.email) {
-      foundUser = user;
-    }
-  }
-  return foundUser;
-};
-
-//Function - Look up URLs by userId
-const getUrlsForUser = (id) => {
-  let foundUrls = {};
-  for (const userId in urlDatabase) {
-    const urls = urlDatabase[userId];
-
-    if (id === urls.userID) {
-      foundUrls[userId] = urlDatabase[userId];
-    }
-  }
-  return foundUrls;
-};
-
 
 //Routes
 
@@ -104,7 +69,7 @@ app.get("/hello", (req, res) => {
 
 // Get /login Route
 app.get("/login", (req, res) => {
-  const userId = req.session.user_id;
+  const userId = req.session.userSessId;
 
   const user = users[userId];
   if (user) {
@@ -121,8 +86,8 @@ app.post("/login", (req, res) => {
   const password = req.body.password;
 
   //Look for a current user with inputted email
-  const lookUpUser = getUserByEmail(email);
-  if (lookUpUser === null) {
+  const lookUpUser = getUserByEmail(email, users);
+  if (lookUpUser === undefined) {
     return res.status(403).send('Email not found. Please register!');
   }
   //If user is located with email address, compare password
@@ -132,7 +97,7 @@ app.post("/login", (req, res) => {
   }
 
   //If email and password both match, set cookie
-  req.session.user_id = lookUpUser.id;
+  req.session.userSessId = lookUpUser.id;
   res.redirect('/urls');
 
 });
@@ -151,7 +116,7 @@ app.post("/logout", (req, res) => {
 
 // Get /register Route
 app.get("/register", (req, res) => {
-  const userId = req.session.user_id;
+  const userId = req.session.userSessId;
   const user = users[userId];
   if (user) {
     res.redirect('/urls');
@@ -168,8 +133,8 @@ app.post("/register", (req, res) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
 
   //if Email already exists in the users object
-  const lookUpUser = getUserByEmail(email);
-  if (lookUpUser !== null) {
+  const lookUpUser = getUserByEmail(email, users);
+  if (lookUpUser !== undefined) {
     return res.status(400).send('Email is already registered!');
   }
 
@@ -185,7 +150,7 @@ app.post("/register", (req, res) => {
     password: hashedPassword,
   };
   console.log('new user:', users);
-  req.session.user_id = id;
+  req.session.userSessId = id;
 
   res.redirect('/urls');
 });
@@ -195,12 +160,12 @@ app.post("/register", (req, res) => {
 
 // Get /urls Route
 app.get("/urls", (req, res) => {
-  const userId = req.session.user_id;
+  const userId = req.session.userSessId;
   const user = users[userId];
   if (!user) {
     return res.send("Please login or register to view URLs!");
   } else {
-    const lookUpUrls = getUrlsForUser(user.id);
+    const lookUpUrls = getUrlsForUser(user.id, urlDatabase);
     const templateVars = {
       user,
       urls: lookUpUrls,
@@ -213,7 +178,7 @@ app.get("/urls", (req, res) => {
 
 // Get /urls/new Route
 app.get("/urls/new", (req, res) => {
-  const userId = req.session.user_id;
+  const userId = req.session.userSessId;
 
   const user = users[userId];
   if (!user) {
@@ -226,7 +191,7 @@ app.get("/urls/new", (req, res) => {
 
 // Post uniqueID to database for newURL
 app.post("/urls", (req, res) => {
-  const userId = req.session.user_id;
+  const userId = req.session.userSessId;
   const user = users[userId];
 
   if (!user) {
@@ -245,14 +210,14 @@ app.post("/urls", (req, res) => {
 
 //Get /urls/:id to show the URL
 app.get("/urls/:id", (req, res) => {
-  const userId = req.session.user_id;
+  const userId = req.session.userSessId;
 
   const user = users[userId];
 
   if (!user) {
     return res.send("Please login or register to view this page!");
   }
-  const lookUpUrls = getUrlsForUser(user.id);
+  const lookUpUrls = getUrlsForUser(user.id, urlDatabase);
   const urlKeys = Object.keys(lookUpUrls);
   if (!urlKeys.includes(req.params.id)) {
     return res.send("This is not your URL to edit or it does not exist!");
@@ -268,10 +233,10 @@ app.get("/urls/:id", (req, res) => {
 //Post /urls/:id to edit a url
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
-  const userId = req.session.user_id;
+  const userId = req.session.userSessId;
 
   const user = users[userId];
-  const lookUpUrls = getUrlsForUser(user.id);
+  const lookUpUrls = getUrlsForUser(user.id, urlDatabase);
   const userUrls = Object.keys(lookUpUrls);
   const urlKeys = Object.keys(urlDatabase);
 
@@ -299,13 +264,13 @@ app.get("/u/:id", (req, res) => {
 //Post to delete a URL
 app.post('/urls/:id/delete', (req, res) => {
   const id = req.params.id;
-  const userId = req.session.user_id;
+  const userId = req.session.userSessId;
 
   const user = users[userId];
   if (!user) {
     return res.send("Please login or register to view this page!");
   }
-  const lookUpUrls = getUrlsForUser(user.id);
+  const lookUpUrls = getUrlsForUser(user.id, urlDatabase);
   const userUrls = Object.keys(lookUpUrls);
 
   if (!userUrls.includes(req.params.id)) {
