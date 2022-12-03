@@ -12,8 +12,14 @@ app.use(morgan('dev'));
 
 //Database for URLs
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xk": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "abc123",
+  },
+  "9sm5xk": {
+    longURL: "http://www.google.com",
+    userID: "abc123",
+  },
 };
 
 //Database for users
@@ -35,7 +41,7 @@ const users = {
   },
 };
 
-//Generates a random unique ID
+//Function - Generates a random unique ID
 const generateRandomString = (length) => {
   const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let result = '';
@@ -45,7 +51,7 @@ const generateRandomString = (length) => {
   return result;
 };
 
-//Look up user by Email
+//Function - Look up user by Email
 const getUserByEmail = (email) => {
   let foundUser = null;
   for (const userId in users) {
@@ -57,6 +63,20 @@ const getUserByEmail = (email) => {
   }
   return foundUser;
 };
+
+//Function - Look up URLs by userId
+const getUrlsForUser = (id) => {
+  let foundUrls = {};
+  for (const userId in urlDatabase) {
+    const urls = urlDatabase[userId];
+
+    if (id === urls.userID) {
+      foundUrls[userId] = urlDatabase[userId];
+    }
+  }
+  return foundUrls;
+};
+
 
 //Routes
 
@@ -74,19 +94,6 @@ app.get("/urls.json", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
-
-// Get /urls Route
-app.get("/urls", (req, res) => {
-  const userId = req.cookies["user_id"];
-  const user = users[userId];
-  const templateVars = {
-    user,
-    urls: urlDatabase,
-  };
-
-  res.render("urls_index", templateVars);
-});
-
 
 //Login/Logout route
 
@@ -173,12 +180,27 @@ app.post("/register", (req, res) => {
 
   res.cookie('user_id', id);
 
-  console.log('new user: ', users);
   res.redirect('/urls');
 });
 
 
 //
+
+// Get /urls Route
+app.get("/urls", (req, res) => {
+  const userId = req.cookies["user_id"];
+  const user = users[userId];
+  if (!user) {
+    return res.send("Please login or register to view URLs!");
+  } else {
+    const lookUpUrls = getUrlsForUser(user.id);
+    const templateVars = {
+      user,
+      urls: lookUpUrls,
+    };
+    res.render("urls_index", templateVars);
+  }
+});
 
 //Create a new URL
 
@@ -186,8 +208,8 @@ app.post("/register", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userId = req.cookies["user_id"];
   const user = users[userId];
-  if (user) {
-    res.redirect('/urls');
+  if (!user) {
+    res.redirect('/login');
   } else {
     const templateVars = { user };
     res.render("urls_new", templateVars);
@@ -202,7 +224,10 @@ app.post("/urls", (req, res) => {
     return res.send("You need to be logged in to shorten URLs!");
   } else {
     const uniqID = generateRandomString(6);
-    urlDatabase[uniqID] = req.body.longURL;
+    urlDatabase[uniqID] = {
+      longURL: req.body.longURL,
+      userID: user.id,
+    };
     res.redirect(`/urls/${uniqID}`);
   }
 });
@@ -213,9 +238,18 @@ app.post("/urls", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const userId = req.cookies["user_id"];
   const user = users[userId];
+
+  if (!user) {
+    return res.send("Please login or register to view this page!");
+  }
+  const lookUpUrls = getUrlsForUser(user.id);
+  const urlKeys = Object.keys(lookUpUrls);
+  if (!urlKeys.includes(req.params.id)) {
+    return res.send("This is not your URL to edit or it does not exist!");
+  }
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
     user,
   };
   res.render("urls_show", templateVars);
@@ -224,7 +258,20 @@ app.get("/urls/:id", (req, res) => {
 //Post /urls/:id to edit a url
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
-  urlDatabase[id] = req.body.id;
+  const userId = req.cookies["user_id"];
+  const user = users[userId];
+  const lookUpUrls = getUrlsForUser(user.id);
+  const userUrls = Object.keys(lookUpUrls);
+  const urlKeys = Object.keys(urlDatabase);
+
+  if (!urlKeys.includes(req.params.id)) {
+    return res.send("URL id does not exist!");
+  }
+  if (!userUrls.includes(req.params.id)) {
+    return res.send("Not your URL to edit!");
+  }
+
+  urlDatabase[id].longURL = req.body.id;
   res.redirect('/urls');
 });
 
@@ -234,17 +281,31 @@ app.get("/u/:id", (req, res) => {
   if (!urlDatabase[id]) {
     return res.send("Shortened url does not exist!");
   }
-  const longURL = urlDatabase[id];
+  const longURL = urlDatabase[id].longURL;
   res.redirect(longURL);
 });
 
 //Post to delete a URL
 app.post('/urls/:id/delete', (req, res) => {
+  const id = req.params.id;
+  const userId = req.cookies["user_id"];
+  const user = users[userId];
+  if (!user) {
+    return res.send("Please login or register to view this page!");
+  }
+  const lookUpUrls = getUrlsForUser(user.id);
+  const userUrls = Object.keys(lookUpUrls);
 
-  const urlID = req.params.id;
+  if (!userUrls.includes(req.params.id)) {
+    return res.send("Not your URL to delete!");
+  }
 
+  const urlKeys = Object.keys(urlDatabase);
+  if (!urlKeys.includes(req.params.id)) {
+    return res.send("URL id does not exist!");
+  }
   // Remove URL from database object
-  delete urlDatabase[urlID];
+  delete urlDatabase[id];
 
   res.redirect('/urls');
 });
