@@ -94,8 +94,12 @@ app.get("/urls", (req, res) => {
 app.get("/login", (req, res) => {
   const userId = req.cookies["user_id"];
   const user = users[userId];
-  const templateVars = { user };
-  res.render("urls_login", templateVars);
+  if (user) {
+    res.redirect('/urls');
+  } else {
+    const templateVars = { user };
+    res.render("urls_login", templateVars);
+  }
 });
 
 //Post for user to login
@@ -136,8 +140,12 @@ app.post("/logout", (req, res) => {
 app.get("/register", (req, res) => {
   const userId = req.cookies["user_id"];
   const user = users[userId];
-  const templateVars = { user };
-  res.render("urls_register", templateVars);
+  if (user) {
+    res.redirect('/urls');
+  } else {
+    const templateVars = { user };
+    res.render("urls_register", templateVars);
+  }
 });
 
 // Post /register route to create a new user
@@ -178,15 +186,25 @@ app.post("/register", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userId = req.cookies["user_id"];
   const user = users[userId];
-  const templateVars = { user };
-  res.render("urls_new", templateVars);
+  if (user) {
+    res.redirect('/urls');
+  } else {
+    const templateVars = { user };
+    res.render("urls_new", templateVars);
+  }
 });
 
 // Post uniqueID to database for newURL
 app.post("/urls", (req, res) => {
-  const uniqID = generateRandomString(6);
-  urlDatabase[uniqID] = req.body.longURL;
-  res.redirect(`/urls/${uniqID}`);
+  const userId = req.cookies["user_id"];
+  const user = users[userId];
+  if (!user) {
+    return res.send("You need to be logged in to shorten URLs!");
+  } else {
+    const uniqID = generateRandomString(6);
+    urlDatabase[uniqID] = req.body.longURL;
+    res.redirect(`/urls/${uniqID}`);
+  }
 });
 
 //
@@ -212,7 +230,11 @@ app.post("/urls/:id", (req, res) => {
 
 //Get to go to the longURL from the shortURL
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
+  const id = req.params.id;
+  if (!urlDatabase[id]) {
+    return res.send("Shortened url does not exist!");
+  }
+  const longURL = urlDatabase[id];
   res.redirect(longURL);
 });
 
