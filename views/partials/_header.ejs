@@ -9,25 +9,25 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-      </div>
-    </div>
-
-    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
+        <a href="/register">
+          <button type="button"
+            style="border-color: black; background-color: transparent; color: black; border-radius: 5px; padding: 6px; padding-left: 7px; padding-right: 7px; margin-right: 5px; font-weight: 600;">Register
+          </button>
+        </a>
         <%if (!user) {%>
-          <form class="nav-item" method="POST" action="/login" style="border-radius: 20px">
-            <label>
-              <input name="username" placeholder="Username" style="padding: 5px; border-radius: 5px; border-color: transparent;">
 
-            </label>
-
-            <input type="submit" value="Login" style="border-radius: 20px; background-color: transparent; border-color: black; border-radius: 5px; padding: 6px;">
-          </form>
+          <a href="/login">
+            <button type="button"
+              style="border-color: black; background-color: transparent; color: black; border-radius: 5px; padding: 6px; padding-left: 7px; padding-right: 7px; margin-left: 5px; font-weight: 600;">Login
+            </button>
+          </a>
           <% } else {%>
-            <h4 style="font-size: 23px; padding: 5px; padding-right: 10px; font-weight: 400;"> Logged in as: <%= user.email%>!
+            <h4 style="font-size: 20px; padding: 5px; padding-right: 10px; font-weight: 400;"> Logged in as: <%=
+                user.email%>!
             </h4>
             <form method="POST" action="/logout">
-              <button type="submit" style="border-radius: 20px; background-color: transparent; border-color: black; border-radius: 5px; padding: 6px;">Logout
+              <button type="submit"
+                style="border-color: black; background-color: transparent; color: black; border-radius: 5px; padding: 6px; padding-left: 7px; padding-right: 7px; margin-right: 5px; font-weight: 600;">Logout
               </button>
             </form>
             <%} %>
