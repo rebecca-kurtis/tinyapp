@@ -1,6 +1,7 @@
 const express = require("express");
 const morgan = require("morgan");
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
 
@@ -120,7 +121,8 @@ app.post("/login", (req, res) => {
     return res.status(403).send('Email not found. Please register!');
   }
   //If user is located with email address, compare password
-  if (lookUpUser.password !== password) {
+  const checkPasswordBycript = bcrypt.compareSync(password, lookUpUser.password);
+  if (checkPasswordBycript !== true) {
     return res.status(403).send('Password does not match. Please try again!');
   }
 
@@ -159,6 +161,7 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   //if Email already exists in the users object
   const lookUpUser = getUserByEmail(email);
@@ -175,9 +178,9 @@ app.post("/register", (req, res) => {
   users[id] = {
     id,
     email: req.body.email,
-    password: req.body.password,
+    password: hashedPassword,
   };
-
+  console.log('new user:', users);
   res.cookie('user_id', id);
 
   res.redirect('/urls');
