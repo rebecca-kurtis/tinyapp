@@ -52,7 +52,13 @@ const users = {
 
 // Get / Route
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  const userId = req.session.userSessId;
+  const user = users[userId];
+  if (!user) {
+    return res.redirect('/login');
+  } else {
+    return res.redirect('/urls');
+  }
 });
 
 // Get /urls.json Route
@@ -118,6 +124,7 @@ app.post("/logout", (req, res) => {
 app.get("/register", (req, res) => {
   const userId = req.session.userSessId;
   const user = users[userId];
+
   if (user) {
     res.redirect('/urls');
   } else {
@@ -149,7 +156,6 @@ app.post("/register", (req, res) => {
     email: req.body.email,
     password: hashedPassword,
   };
-  console.log('new user:', users);
   req.session.userSessId = id;
 
   res.redirect('/urls');
@@ -163,7 +169,7 @@ app.get("/urls", (req, res) => {
   const userId = req.session.userSessId;
   const user = users[userId];
   if (!user) {
-    return res.send("Please login or register to view URLs!");
+    return res.send("You need to be logged in to view this page!");
   } else {
     const lookUpUrls = getUrlsForUser(user.id, urlDatabase);
     const templateVars = {
@@ -213,15 +219,17 @@ app.get("/urls/:id", (req, res) => {
   const userId = req.session.userSessId;
 
   const user = users[userId];
-
+  //If user is not logged in
   if (!user) {
     return res.send("Please login or register to view this page!");
   }
+  //If user is logged in but it's not their url to edit/see
   const lookUpUrls = getUrlsForUser(user.id, urlDatabase);
   const urlKeys = Object.keys(lookUpUrls);
   if (!urlKeys.includes(req.params.id)) {
     return res.send("This is not your URL to edit or it does not exist!");
   }
+  //If it is their url to edit/see
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL,
@@ -240,9 +248,12 @@ app.post("/urls/:id", (req, res) => {
   const userUrls = Object.keys(lookUpUrls);
   const urlKeys = Object.keys(urlDatabase);
 
+  //If url id is not in the urlDatabase
   if (!urlKeys.includes(req.params.id)) {
     return res.send("URL id does not exist!");
   }
+  
+  //If it's not their url to edit/see
   if (!userUrls.includes(req.params.id)) {
     return res.send("Not your URL to edit!");
   }
@@ -266,17 +277,19 @@ app.post('/urls/:id/delete', (req, res) => {
   const id = req.params.id;
   const userId = req.session.userSessId;
 
+  //If user is not logged in
   const user = users[userId];
   if (!user) {
     return res.send("Please login or register to view this page!");
   }
+  //If user is logged in but it is not their url
   const lookUpUrls = getUrlsForUser(user.id, urlDatabase);
   const userUrls = Object.keys(lookUpUrls);
 
   if (!userUrls.includes(req.params.id)) {
     return res.send("Not your URL to delete!");
   }
-
+  //If url doesn't exist in urlDatabase
   const urlKeys = Object.keys(urlDatabase);
   if (!urlKeys.includes(req.params.id)) {
     return res.send("URL id does not exist!");
