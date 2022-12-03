@@ -45,7 +45,19 @@ const generateRandomString = (length) => {
   return result;
 };
 
-//function get user by email (create)
+//Look up user by Email
+const getUserByEmail = (email) => {
+  let foundUser = null;
+  for (const userId in users) {
+    const user = users[userId];
+
+    if (email === user.email) {
+      foundUser = user;
+    }
+  }
+  return foundUser;
+};
+
 //Routes
 
 // Get / Route
@@ -72,7 +84,7 @@ app.get("/urls", (req, res) => {
     user,
     urls: urlDatabase,
   };
- 
+
   res.render("urls_index", templateVars);
 });
 
@@ -86,8 +98,6 @@ app.post("/login", (req, res) => {
   res.redirect('/urls');
 
 });
-
-
 
 //Post for user to logout
 app.post("/logout", (req, res) => {
@@ -103,8 +113,7 @@ app.post("/logout", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userId = req.cookies["user_id"];
   const user = users[userId];
-  // console.log('user is:', user);
-  const templateVars = {user};
+  const templateVars = { user };
   res.render("urls_new", templateVars);
 });
 
@@ -123,12 +132,27 @@ app.post("/urls", (req, res) => {
 app.get("/register", (req, res) => {
   const userId = req.cookies["user_id"];
   const user = users[userId];
-  const templateVars = {user};
+  const templateVars = { user };
   res.render("urls_register", templateVars);
 });
 
 // Post uniqueUsernameID to users for a newUser
 app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  //if Email already exists in the users object
+  const lookUpUser = getUserByEmail(email);
+  if (lookUpUser !== null) {
+    console.log('new user: ', users);
+    return res.status(400).send('Email is already registered!');
+  }
+
+  //if email or password is empty
+  if (!email || !password) {
+    console.log('new user: ', users);
+    return res.status(400).send('Email or Password cannot be empty!');
+  }
+
   const id = generateRandomString(6);
   users[id] = {
     id,
@@ -136,6 +160,7 @@ app.post("/register", (req, res) => {
     password: req.body.password,
   };
   res.cookie('user_id', id);
+
   console.log('new user: ', users);
   res.redirect('/urls');
 });
