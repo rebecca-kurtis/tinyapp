@@ -79,7 +79,6 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   const userId = req.cookies["user_id"];
   const user = users[userId];
-  // console.log('user:', user);
   const templateVars = {
     user,
     urls: urlDatabase,
@@ -103,8 +102,19 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  //Get user and compare password and then if good set cookie
-  res.cookie('user_id', 'abc123');
+
+  //Look for a current user with inputted email
+  const lookUpUser = getUserByEmail(email);
+  if (lookUpUser === null) {
+    return res.status(403).send('Email not found. Please register!');
+  }
+  //If user is located with email address, compare password
+  if (lookUpUser.password !== password) {
+    return res.status(403).send('Password does not match. Please try again!');
+  }
+
+  //If email and password both match, set cookie
+  res.cookie('user_id', lookUpUser.id);
 
   res.redirect('/urls');
 
@@ -114,9 +124,51 @@ app.post("/login", (req, res) => {
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
 
-  res.redirect('/urls');
+  res.redirect('/login');
 
 });
+
+//
+
+//Create a new User
+
+// Get /register Route
+app.get("/register", (req, res) => {
+  const userId = req.cookies["user_id"];
+  const user = users[userId];
+  const templateVars = { user };
+  res.render("urls_register", templateVars);
+});
+
+// Post /register route to create a new user
+app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  //if Email already exists in the users object
+  const lookUpUser = getUserByEmail(email);
+  if (lookUpUser !== null) {
+    return res.status(400).send('Email is already registered!');
+  }
+
+  //if email or password is empty
+  if (!email || !password) {
+    return res.status(400).send('Email or Password cannot be empty!');
+  }
+  //Create a new user
+  const id = generateRandomString(6);
+  users[id] = {
+    id,
+    email: req.body.email,
+    password: req.body.password,
+  };
+
+  res.cookie('user_id', id);
+
+  console.log('new user: ', users);
+  res.redirect('/urls');
+});
+
 
 //
 
@@ -136,48 +188,6 @@ app.post("/urls", (req, res) => {
   urlDatabase[uniqID] = req.body.longURL;
   res.redirect(`/urls/${uniqID}`);
 });
-
-//
-
-//Create a new User
-
-// Get /register Route
-app.get("/register", (req, res) => {
-  const userId = req.cookies["user_id"];
-  const user = users[userId];
-  const templateVars = { user };
-  res.render("urls_register", templateVars);
-});
-
-// Post uniqueUsernameID to users for a newUser
-app.post("/register", (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-
-  //if Email already exists in the users object
-  const lookUpUser = getUserByEmail(email);
-  if (lookUpUser !== null) {
-    return res.status(400).send('Email is already registered!');
-  }
-
-  //if email or password is empty
-  if (!email || !password) {
-    return res.status(400).send('Email or Password cannot be empty!');
-  }
-
-  const id = generateRandomString(6);
-  users[id] = {
-    id,
-    email: req.body.email,
-    password: req.body.password,
-  };
-
-  res.cookie('user_id', id);
-
-  console.log('new user: ', users);
-  res.redirect('/urls');
-});
-
 
 //
 

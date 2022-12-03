@@ -9,18 +9,15 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <a href="/register">
-          <button type="button"
-            style="border-color: black; background-color: transparent; color: black; border-radius: 5px; padding: 6px; padding-left: 7px; padding-right: 7px; margin-right: 5px; font-weight: 600;">Register
-          </button>
-        </a>
-        <%if (!user) {%>
+      </div>
+    </div>
 
-          <a href="/login">
-            <button type="button"
-              style="border-color: black; background-color: transparent; color: black; border-radius: 5px; padding: 6px; padding-left: 7px; padding-right: 7px; margin-left: 5px; font-weight: 600;">Login
-            </button>
-          </a>
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup" style="justify-content: right;">
+      <div class="navbar-nav">
+
+        <%if (!user) {%>
+          <a class="nav-item nav-link" href="/login">Login</a>
+          <a class="nav-item nav-link" href="/register">Register</a>
           <% } else {%>
             <h4 style="font-size: 20px; padding: 5px; padding-right: 10px; font-weight: 400;"> Logged in as: <%=
                 user.email%>!
